@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biomas do Brasil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ece4;
+      --muted: #888;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, #0f3d1a 0%, #0d0d0d 70%);
+    }
+
+    .hero-noise {
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+
+    .hero-label {
+      position: relative;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #52b788;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero h1 {
+      position: relative;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.5rem, 10vw, 9rem);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.4s forwards;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: #52b788;
+    }
+
+    .hero-sub {
+      position: relative;
+      max-width: 540px;
+      margin: 2rem auto 0;
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeUp 0.9s 0.6s forwards;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 1s 1s forwards;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, #52b788, transparent);
+      animation: scrollPulse 2s infinite;
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat {
+      padding: 2rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+
+    .stat-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #52b788;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ── GRID SECTION ── */
+    .section-header {
+      padding: 5rem 4rem 3rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .section-count {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding-bottom: 0.5rem;
+    }
+
+    .biomes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    }
+
+    /* ── BIOME CARD ── */
+    .biome-card {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .biome-card:hover { background: rgba(255,255,255,0.02); }
+
+    .card-visual {
+      height: 220px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-bg-gradient {
+      position: absolute; inset: 0;
+      opacity: 0.85;
+      transition: opacity 0.4s, transform 0.4s;
+    }
+
+    .biome-card:hover .card-bg-gradient {
+      opacity: 1;
+      transform: scale(1.03);
+    }
+
+    .card-svg {
+      position: relative;
+      z-index: 1;
+      transition: transform 0.4s;
+      filter: drop-shadow(0 12px 32px rgba(0,0,0,0.5));
+    }
+
+    .biome-card:hover .card-svg { transform: scale(1.06) translateY(-4px); }
+
+    .card-area-badge {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2rem;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    .card-icon {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      font-size: 1.5rem;
+      z-index: 2;
+    }
+
+    .card-body {
+      padding: 1.8rem 2rem;
+    }
+
+    .card-number {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: #aaa;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0.7rem;
+      border-radius: 2rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .card-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail-group { }
+
+    .detail-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .detail-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .detail-item {
+      font-size: 0.75rem;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .detail-item::before {
+      content: '';
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .card-footer {
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .climate-chip {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .coverage-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .bar-track {
+      width: 80px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    .coverage-pct {
+      font-size: 0.7rem;
+      color: var(--muted);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* ── THREATS ── */
+    .threats-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .threats-left {
+      padding: 4rem;
+      border-right: 1px solid var(--border);
+    }
+
+    .threats-right {
+      padding: 4rem;
+    }
+
+    .threats-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .threat-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .threat-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .threat-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #e07b39;
+      flex-shrink: 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 4rem;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .footer-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .footer-brand span { color: #52b788; }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      line-height: 1.6;
+    }
+
+    .footer-right {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .stats-bar { grid-template-columns: 1fr; }
+      .stat { border-right: none; border-bottom: 1px solid var(--border); }
+      .section-header { padding: 3rem 1.5rem 2rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .biomes-grid { grid-template-columns: 1fr; }
+      .threats-section { grid-template-columns: 1fr; }
+      .threats-left { border-right: none; border-bottom: 1px solid var(--border); padding: 2rem 1.5rem; }
+      .threats-right { padding: 2rem 1.5rem; }
+      footer { grid-template-columns: 1fr; }
+      .footer-right { text-align: left; }
+      .card-details { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-noise"></div>
+  <p class="hero-label">República Federativa do Brasil</p>
+  <h1>Biomas<br><em>do Brasil</em></h1>
+  <p class="hero-sub">
+    Do Equador ao Pampa, da Caatinga aos oceanos — sete ecossistemas que definem a maior biodiversidade do planeta.
+  </p>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Explorar
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-number">7</div>
+    <div class="stat-label">Biomas reconhecidos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">~1/5</div>
+    <div class="stat-label">Das espécies do planeta</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">8,5M</div>
+    <div class="stat-label">km² de território</div>
+  </div>
+</div>
+
+<!-- GRID -->
+<div class="section-header">
+  <h2 class="section-title">Os Sete<br>Ecossistemas</h2>
+  <span class="section-count">07 biomas catalogados</span>
+</div>
+
+<div class="biomes-grid">
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 50%, #40916c 100%);"></div>
+      <span class="card-icon">🌿</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,60 L20,20 L60,10 L100,30 L120,60 L110,100 L70,120 L30,110 L0,80 Z" fill="#52b788" opacity="0.25"/>
+        <path d="M0,60 L20,20 L60,10 L100,30 L120,60 L110,100 L70,120 L30,110 L0,80 Z" stroke="#52b788" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M0,60 L20,20 L60,10 L100,30 L120,60 L110,100 L70,120 L30,110 L0,80 Z" fill="#52b788" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">4,1 milhões km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 01</div>
+      <h2 class="card-name" style="color:#52b788">Amazônia</h2>
+      <p class="card-desc">A maior floresta tropical do mundo, o pulmão do planeta. Abriga cerca de 10% de todas as espécies vivas da Terra e regula o clima de toda a América do Sul através dos chamados 'rios voadores'.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#52b78833;color:#52b788">Desmatamento</span><span class="tag" style="border-color:#52b78833;color:#52b788">Garimpo ilegal</span><span class="tag" style="border-color:#52b78833;color:#52b788">Queimadas</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#52b788;flex-shrink:0"></span>Onça-pintada</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#52b788;flex-shrink:0"></span>Boto-cor-de-rosa</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#52b788;flex-shrink:0"></span>Arara-azul</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#52b788;flex-shrink:0"></span>Seringueira</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#52b788;flex-shrink:0"></span>Vitória-régia</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#52b788;flex-shrink:0"></span>Açaí</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Equatorial úmido</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:98%;background:#52b788;"></div>
+        </div>
+        <span class="coverage-pct">49%</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #7c4f00 0%, #a0522d 50%, #c8832a 100%);"></div>
+      <span class="card-icon">🌾</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10,40 L50,10 L90,20 L110,50 L100,90 L60,110 L20,100 L0,70 Z" fill="#e8a020" opacity="0.25"/>
+        <path d="M10,40 L50,10 L90,20 L110,50 L100,90 L60,110 L20,100 L0,70 Z" stroke="#e8a020" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M10,40 L50,10 L90,20 L110,50 L100,90 L60,110 L20,100 L0,70 Z" fill="#e8a020" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">2 milhões km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 02</div>
+      <h2 class="card-name" style="color:#e8a020">Cerrado</h2>
+      <p class="card-desc">A savana mais biodiversa do mundo e o segundo maior bioma brasileiro. Conhecido como 'berço das águas', é onde nascem as principais bacias hidrográficas do Brasil, como São Francisco, Paraná e Araguaia.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#e8a02033;color:#e8a020">Agropecuária</span><span class="tag" style="border-color:#e8a02033;color:#e8a020">Monocultura</span><span class="tag" style="border-color:#e8a02033;color:#e8a020">Fogo</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>Lobo-guará</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>Tamanduá-bandeira</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>Ema</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>Ipê-amarelo</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>Buriti</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e8a020;flex-shrink:0"></span>Pequi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Tropical sazonal</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:48%;background:#e8a020;"></div>
+        </div>
+        <span class="coverage-pct">24%</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #52b788 100%);"></div>
+      <span class="card-icon">🦋</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5,30 L30,5 L70,15 L100,40 L95,80 L70,105 L30,100 L5,75 Z" fill="#74c69d" opacity="0.25"/>
+        <path d="M5,30 L30,5 L70,15 L100,40 L95,80 L70,105 L30,100 L5,75 Z" stroke="#74c69d" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M5,30 L30,5 L70,15 L100,40 L95,80 L70,105 L30,100 L5,75 Z" fill="#74c69d" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">1,1 milhão km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 03</div>
+      <h2 class="card-name" style="color:#74c69d">Mata Atlântica</h2>
+      <p class="card-desc">Um dos hotspots de biodiversidade mais ameaçados do planeta. Restam apenas 12% de sua cobertura original, mas ainda abriga mais de 20.000 espécies de plantas e é lar de 72% da população brasileira.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#74c69d33;color:#74c69d">Urbanização</span><span class="tag" style="border-color:#74c69d33;color:#74c69d">Fragmentação</span><span class="tag" style="border-color:#74c69d33;color:#74c69d">Desmatamento</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#74c69d;flex-shrink:0"></span>Mico-leão-dourado</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#74c69d;flex-shrink:0"></span>Muriqui</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#74c69d;flex-shrink:0"></span>Jaguarundi</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#74c69d;flex-shrink:0"></span>Pau-brasil</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#74c69d;flex-shrink:0"></span>Jequitibá-rosa</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#74c69d;flex-shrink:0"></span>Araucária</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Tropical e Subtropical úmido</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:26%;background:#74c69d;"></div>
+        </div>
+        <span class="coverage-pct">13%</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #6b3a2a 0%, #8b4513 50%, #c0632a 100%);"></div>
+      <span class="card-icon">🌵</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15,35 L45,8 L80,18 L105,45 L100,80 L75,105 L35,98 L8,70 Z" fill="#e07b39" opacity="0.25"/>
+        <path d="M15,35 L45,8 L80,18 L105,45 L100,80 L75,105 L35,98 L8,70 Z" stroke="#e07b39" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M15,35 L45,8 L80,18 L105,45 L100,80 L75,105 L35,98 L8,70 Z" fill="#e07b39" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">844 mil km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 04</div>
+      <h2 class="card-name" style="color:#e07b39">Caatinga</h2>
+      <p class="card-desc">O único bioma exclusivamente brasileiro e a única savana semiárida tropical do mundo. Resiliente e única, a caatinga ('mata branca' em tupi) abriga espécies adaptadas à escassez extrema de água.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#e07b3933;color:#e07b39">Desertificação</span><span class="tag" style="border-color:#e07b3933;color:#e07b39">Superexploração</span><span class="tag" style="border-color:#e07b3933;color:#e07b39">Seca</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e07b39;flex-shrink:0"></span>Ararinha-azul</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e07b39;flex-shrink:0"></span>Gato-do-mato</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e07b39;flex-shrink:0"></span>Tatu-bola</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e07b39;flex-shrink:0"></span>Mandacaru</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e07b39;flex-shrink:0"></span>Umbu</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e07b39;flex-shrink:0"></span>Juazeiro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Semiárido</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:20%;background:#e07b39;"></div>
+        </div>
+        <span class="coverage-pct">10%</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #3d5a1a 0%, #4a7a25 50%, #6ba535 100%);"></div>
+      <span class="card-icon">🐎</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10,45 L45,12 L85,22 L108,50 L95,85 L65,108 L28,100 L5,72 Z" fill="#a8c957" opacity="0.25"/>
+        <path d="M10,45 L45,12 L85,22 L108,50 L95,85 L65,108 L28,100 L5,72 Z" stroke="#a8c957" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M10,45 L45,12 L85,22 L108,50 L95,85 L65,108 L28,100 L5,72 Z" fill="#a8c957" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">176 mil km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 05</div>
+      <h2 class="card-name" style="color:#a8c957">Pampa</h2>
+      <p class="card-desc">Os campos sulinos que se estendem pela Argentina e Uruguai. O menor bioma brasileiro em território nacional, caracterizado por campos abertos, coxilhas onduladas e rica biodiversidade de gramíneas nativas.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#a8c95733;color:#a8c957">Pecuária intensiva</span><span class="tag" style="border-color:#a8c95733;color:#a8c957">Monocultura de soja</span><span class="tag" style="border-color:#a8c95733;color:#a8c957">Silvicultura</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#a8c957;flex-shrink:0"></span>Veado-campeiro</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#a8c957;flex-shrink:0"></span>Graxaim-do-campo</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#a8c957;flex-shrink:0"></span>Seriema</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#a8c957;flex-shrink:0"></span>Capim-caninha</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#a8c957;flex-shrink:0"></span>Erva-mate</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#a8c957;flex-shrink:0"></span>Espinilho</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Subtropical úmido</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:4%;background:#a8c957;"></div>
+        </div>
+        <span class="coverage-pct">2%</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #005f73 0%, #0a7a8c 50%, #1a9eaa 100%);"></div>
+      <span class="card-icon">🐊</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8,42 L42,10 L82,20 L110,48 L102,84 L68,110 L25,102 L5,68 Z" fill="#0abdc6" opacity="0.25"/>
+        <path d="M8,42 L42,10 L82,20 L110,48 L102,84 L68,110 L25,102 L5,68 Z" stroke="#0abdc6" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M8,42 L42,10 L82,20 L110,48 L102,84 L68,110 L25,102 L5,68 Z" fill="#0abdc6" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">150 mil km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 06</div>
+      <h2 class="card-name" style="color:#0abdc6">Pantanal</h2>
+      <p class="card-desc">A maior planície alagável do mundo e o maior berçário natural do planeta. Patrimônio Natural da Humanidade pela UNESCO, concentra a maior densidade de onças-pintadas do mundo e 650 espécies de aves.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#0abdc633;color:#0abdc6">Queimadas</span><span class="tag" style="border-color:#0abdc633;color:#0abdc6">Seca</span><span class="tag" style="border-color:#0abdc633;color:#0abdc6">Pecuária extensiva</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#0abdc6;flex-shrink:0"></span>Onça-pintada</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#0abdc6;flex-shrink:0"></span>Tuiuiú</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#0abdc6;flex-shrink:0"></span>Capivara</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#0abdc6;flex-shrink:0"></span>Cambará</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#0abdc6;flex-shrink:0"></span>Bocaiúva</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#0abdc6;flex-shrink:0"></span>Paratudo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Tropical continental</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:3%;background:#0abdc6;"></div>
+        </div>
+        <span class="coverage-pct">1,76%</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="biome-card">
+    <div class="card-visual">
+      <div class="card-bg-gradient" style="background: linear-gradient(135deg, #023e8a 0%, #0353a4 50%, #0466c8 100%);"></div>
+      <span class="card-icon">🐋</span>
+      <svg class="card-svg" width="140" height="140" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5,50 L25,15 L65,8 L100,28 L115,60 L105,95 L70,115 L25,108 L0,80 Z" fill="#48cae4" opacity="0.25"/>
+        <path d="M5,50 L25,15 L65,8 L100,28 L115,60 L105,95 L70,115 L25,108 L0,80 Z" stroke="#48cae4" stroke-width="1.5" fill="none" opacity="0.9"/>
+        <path d="M5,50 L25,15 L65,8 L100,28 L115,60 L105,95 L70,115 L25,108 L0,80 Z" fill="#48cae4" opacity="0.08"/>
+      </svg>
+      <div class="card-area-badge">3,5 milhões km²</div>
+    </div>
+    <div class="card-body">
+      <div class="card-number">Bioma 07</div>
+      <h2 class="card-name" style="color:#48cae4">Zona Marinha</h2>
+      <p class="card-desc">O Brasil possui uma das maiores zonas econômicas exclusivas do mundo. Nossos oceanos abrigam o Arquipélago de Fernando de Noronha, o Atol das Rocas e recifes coralinos únicos no Atlântico Sul.</p>
+      <div class="card-tags"><span class="tag" style="border-color:#48cae433;color:#48cae4">Poluição plástica</span><span class="tag" style="border-color:#48cae433;color:#48cae4">Pesca predatória</span><span class="tag" style="border-color:#48cae433;color:#48cae4">Branqueamento de corais</span></div>
+      <div class="card-details">
+        <div class="detail-group">
+          <div class="detail-label">Fauna emblema</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#48cae4;flex-shrink:0"></span>Tartaruga-marinha</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#48cae4;flex-shrink:0"></span>Baleia-jubarte</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#48cae4;flex-shrink:0"></span>Peixe-boi-marinho</div>
+          </div>
+        </div>
+        <div class="detail-group">
+          <div class="detail-label">Flora nativa</div>
+          <div class="detail-items">
+            <div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#48cae4;flex-shrink:0"></span>Manguezal</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#48cae4;flex-shrink:0"></span>Restinga</div><div class="detail-item"><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#48cae4;flex-shrink:0"></span>Recifes de coral</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <span class="climate-chip">☁ Oceânico tropical e subtropical</span>
+      <div class="coverage-bar">
+        <div class="bar-track">
+          <div class="bar-fill" style="width:70%;background:#48cae4;"></div>
+        </div>
+        <span class="coverage-pct">Zona Econômica</span>
+      </div>
+    </div>
+  </article>
+
+</div>
+
+<!-- THREATS -->
+<div class="threats-section" style="border-top:1px solid var(--border);margin-top:2rem;">
+  <div class="threats-left">
+    <h3 class="threats-title">Ameaças aos<br><em style="font-style:italic;color:#e07b39">Ecossistemas</em></h3>
+    <p style="font-size:0.85rem;color:#888;line-height:1.7;margin-bottom:2rem;">
+      A biodiversidade brasileira enfrenta pressões crescentes que ameaçam o equilíbrio de ecossistemas únicos no mundo.
+    </p>
+    <ul class="threat-list">
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Desmatamento
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Garimpo ilegal
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Queimadas
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Agropecuária
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Monocultura
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Fogo
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Urbanização
+      </li>
+
+      <li class="threat-item">
+        <div class="threat-dot"></div>
+        Fragmentação
+      </li>
+
+    </ul>
+  </div>
+  <div class="threats-right">
+    <div style="padding:2rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:4px;margin-bottom:1.5rem;">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#888;margin-bottom:0.5rem">Dados críticos</div>
+      <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:#e07b39">88%</div>
+      <div style="font-size:0.85rem;color:#888;margin-top:0.3rem">da Mata Atlântica já foi destruída</div>
+    </div>
+    <div style="padding:2rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:4px;margin-bottom:1.5rem;">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#888;margin-bottom:0.5rem">Espécies ameaçadas</div>
+      <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:#e8a020">+1.200</div>
+      <div style="font-size:0.85rem;color:#888;margin-top:0.3rem">espécies em risco de extinção no Brasil</div>
+    </div>
+    <div style="padding:2rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:4px;">
+      <div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#888;margin-bottom:0.5rem">Área desmatada/ano</div>
+      <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:#48cae4">~11K</div>
+      <div style="font-size:0.85rem;color:#888;margin-top:0.3rem">km² de Amazônia desmatados por ano (média)</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-brand">Biomas <span>Brasil</span></div>
+    <p class="footer-copy">
+      Um guia visual e educativo sobre os ecossistemas que compõem a nação megadiversa.<br>
+      Gerado com Python · Hospedado no Render.
+    </p>
+  </div>
+  <div class="footer-right">
+    Amazônia · Cerrado · Mata Atlântica<br>
+    Caatinga · Pampa · Pantanal<br>
+    Zona Marinha
+  </div>
+</footer>
+
+</body>
+</html>

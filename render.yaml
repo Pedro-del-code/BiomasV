@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: biomas-brasil
+    env: python
+    buildCommand: python generate_site.py
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
